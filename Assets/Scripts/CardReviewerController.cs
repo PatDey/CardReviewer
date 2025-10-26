@@ -1,10 +1,10 @@
 using SFB;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using WebP;
 
 public class CardReviewerController : MonoBehaviour
 {
@@ -40,6 +40,8 @@ public class CardReviewerController : MonoBehaviour
     private int _nextCardSpriteIndex;
     private bool _currentCard;
 
+    private ExtensionFilter[] _filters = new ExtensionFilter[] {new ExtensionFilter("Image Files", "jpg", "png", "webp")};
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -73,13 +75,11 @@ public class CardReviewerController : MonoBehaviour
 
     private void SelectBackgroundButton_OnClick()
     {
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Background", "", new ExtensionFilter[] {new ExtensionFilter("Image Files", "jpg", "png")}, false);
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Background", "", _filters, false);
 
         if(paths.Length > 0)
         {
-            byte[] imageBytes = File.ReadAllBytes(paths[0]);
-            Texture2D tex = new Texture2D(0,0);
-            tex.LoadImage(imageBytes);
+            Texture2D tex = CreateTextureFromPath(paths[0]);
             _backgroundSprite =  Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), Vector2.zero);
             backgroundPreviewImage.sprite = _backgroundSprite;
             backgroundImage.sprite = _backgroundSprite;
@@ -87,7 +87,7 @@ public class CardReviewerController : MonoBehaviour
     }
     private void SelectCardsButton_OnClick()
     {
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Background", "", new ExtensionFilter[] {new ExtensionFilter("Image Files", "jpg", "png")}, true);
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Cards", "", _filters, true);
 
         if(paths.Length > 0)
         {
@@ -101,9 +101,7 @@ public class CardReviewerController : MonoBehaviour
 
             foreach(string path in paths)
             { 
-                byte[] imageBytes = File.ReadAllBytes(path);
-                Texture2D tex = new Texture2D(0,0);
-                tex.LoadImage(imageBytes);
+                Texture2D tex = CreateTextureFromPath(path);
 
                 Image cardImage = Instantiate(cardPreviewPrefab, scrollContentTransform);
                 Sprite cardSprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), Vector2.zero);
@@ -138,5 +136,17 @@ public class CardReviewerController : MonoBehaviour
             nextCard.Show();
             _currentCard = !_currentCard;
         }
+    }
+
+    private Texture2D CreateTextureFromPath(string path)
+    {
+        byte[] imageBytes = File.ReadAllBytes(path);
+        Texture2D tex = new Texture2D(0,0);
+        if(Path.GetExtension(path) == ".webp")
+            tex = Texture2DExt.CreateTexture2DFromWebP(imageBytes, lMipmaps: false, lLinear: false, lError: out Error lError);
+        else 
+            tex.LoadImage(imageBytes);
+
+        return tex;
     }
 }
