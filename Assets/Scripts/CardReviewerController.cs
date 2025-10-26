@@ -1,4 +1,5 @@
 using SFB;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -10,6 +11,8 @@ public class CardReviewerController : MonoBehaviour
 {
     [Header("Components")]
     [SerializeField]
+    private Button selectCardbackButton;
+    [SerializeField]
     private Button selectBackgroundButton;
     [SerializeField]
     private Button selectCardsButton;
@@ -17,6 +20,8 @@ public class CardReviewerController : MonoBehaviour
     private Button startReviewButton;
     [SerializeField]
     private Button closeAppButton;
+    [SerializeField]
+    private Image cardbackPreviewImage;
     [SerializeField]
     private Image backgroundPreviewImage;
     [SerializeField]
@@ -32,7 +37,6 @@ public class CardReviewerController : MonoBehaviour
     [SerializeField]
     private Image cardPreviewPrefab;
 
-    private Sprite _backgroundSprite;
     private List<Sprite> _cardSprites = new List<Sprite>();
 
     private List<Image> _loadedPrefabs = new List<Image>();
@@ -42,9 +46,9 @@ public class CardReviewerController : MonoBehaviour
 
     private ExtensionFilter[] _filters = new ExtensionFilter[] {new ExtensionFilter("Image Files", "jpg", "png", "webp")};
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        selectCardbackButton.onClick.AddListener(SelectCardbackButton_OnClick);
         selectBackgroundButton.onClick.AddListener(SelectBackgroundButton_OnClick);
         selectCardsButton.onClick.AddListener(SelectCardsButton_OnClick);
         startReviewButton.onClick.AddListener(StartReviewButton_OnClick);
@@ -73,16 +77,27 @@ public class CardReviewerController : MonoBehaviour
             SetNextCard();
     }
 
-    private void SelectBackgroundButton_OnClick()
+    private void SelectBackgroundButton_OnClick() =>  SelectImage("Select Background", backgroundPreviewImage, (Sprite sprite) => backgroundImage.sprite = sprite);
+
+    private void SelectCardbackButton_OnClick() => SelectImage("Select Cardback", cardbackPreviewImage, SetCardbackImages);
+
+    private void SetCardbackImages(Sprite sprite)
+    {
+        cardOne.SetBackSprite(sprite);
+        cardTwo.SetBackSprite(sprite);
+    }
+
+    private void SelectImage(string title, Image previewImage, Action<Sprite> setActualImages)
     {
         string[] paths = StandaloneFileBrowser.OpenFilePanel("Select Background", "", _filters, false);
 
         if(paths.Length > 0)
         {
             Texture2D tex = CreateTextureFromPath(paths[0]);
-            _backgroundSprite =  Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), Vector2.zero);
-            backgroundPreviewImage.sprite = _backgroundSprite;
-            backgroundImage.sprite = _backgroundSprite;
+            Sprite sprite =  Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), Vector2.zero);
+            previewImage.sprite = sprite;
+            setActualImages?.Invoke(sprite);
+
         }
     }
     private void SelectCardsButton_OnClick()
@@ -129,7 +144,7 @@ public class CardReviewerController : MonoBehaviour
             Card nextCard = _currentCard ? cardTwo : cardOne;
             Card activeCard = _currentCard ? cardOne : cardTwo;
 
-            nextCard.SetSprite(_cardSprites[_nextCardSpriteIndex]);
+            nextCard.SetFrontSprite(_cardSprites[_nextCardSpriteIndex]);
             _nextCardSpriteIndex++;
 
             activeCard.Hide();

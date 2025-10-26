@@ -128,6 +128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Card
   _cardAnimator: {fileID: 9159842615328043003}
   frontImage: {fileID: 5902620259161389317}
+  backImage: {fileID: 604416037776007136}
 --- !u!95 &9159842615328043003
 Animator:
   serializedVersion: 7
